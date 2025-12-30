@@ -18,7 +18,7 @@ FROM alpine:latest
 
 LABEL org.opencontainers.image.title="Docker Cleanup Tool" \
       org.opencontainers.image.description="Automated tool to clean up unused Docker containers, volumes, networks, and images." \
-      org.opencontainers.image.source="https://github.com/rafael-qsantos/Management-go" \
+      org.opencontainers.image.source="https://github.com/RafaelQSantos-RQS/management-go" \
       org.opencontainers.image.version="1.0.0" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.authors="Rafael Queiroz Santos"
