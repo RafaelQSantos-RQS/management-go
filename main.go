@@ -7,11 +7,30 @@ import (
 	"os"
 	"time"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
 )
+
+// DockerClient defines the interface for Docker SDK methods used by this tool.
+type DockerClient interface {
+	ContainerList(ctx context.Context, options container.ListOptions) ([]types.Container, error)
+	ContainerRemove(ctx context.Context, containerID string, options container.RemoveOptions) error
+	VolumesPrune(ctx context.Context, pruneFilters filters.Args) (types.VolumesPruneReport, error)
+	NetworksPrune(ctx context.Context, pruneFilters filters.Args) (types.NetworksPruneReport, error)
+	ImageList(ctx context.Context, options image.ListOptions) ([]image.Summary, error)
+	ImageRemove(ctx context.Context, imageID string, options image.RemoveOptions) ([]image.DeleteResponse, error)
+	Close() error
+}
+
+func getShortID(id string) string {
+	if len(id) > 12 {
+		return id[:12]
+	}
+	return id
+}
 
 func logInfo(msg string) {
 	fmt.Printf("[%s] INFO: %s\n", time.Now().Format("2006-01-02 15:04:05"), msg)
@@ -65,7 +84,7 @@ func main() {
 	}
 }
 
-func executeCleanup(ctx context.Context, cli *client.Client) {
+func executeCleanup(ctx context.Context, cli DockerClient) {
 	// Execute all cleanup operations
 	cleanupStoppedContainers(ctx, cli)
 	cleanupUnusedVolumes(ctx, cli)
@@ -73,7 +92,7 @@ func executeCleanup(ctx context.Context, cli *client.Client) {
 	cleanupUnusedImages(ctx, cli)
 }
 
-func cleanupStoppedContainers(ctx context.Context, cli *client.Client) {
+func cleanupStoppedContainers(ctx context.Context, cli DockerClient) {
 	logInfo("Starting stopped containers cleanup")
 
 	containers, err := cli.ContainerList(ctx, container.ListOptions{All: true})
@@ -86,11 +105,11 @@ func cleanupStoppedContainers(ctx context.Context, cli *client.Client) {
 	for _, cont := range containers {
 		if cont.State != "running" {
 			containerName := cont.Names[0][1:]
-			logInfo(fmt.Sprintf("Removing stopped container: %s (ID: %s, State: %s)", containerName, cont.ID[:12], cont.State))
+			logInfo(fmt.Sprintf("Removing stopped container: %s (ID: %s, State: %s)", containerName, getShortID(cont.ID), cont.State))
 
 			err := cli.ContainerRemove(ctx, cont.ID, container.RemoveOptions{})
 			if err != nil {
-				logError(fmt.Sprintf("Failed to remove container %s: %v", cont.ID[:12], err))
+				logError(fmt.Sprintf("Failed to remove container %s: %v", getShortID(cont.ID), err))
 			} else {
 				removed++
 			}
@@ -104,7 +123,7 @@ func cleanupStoppedContainers(ctx context.Context, cli *client.Client) {
 	}
 }
 
-func cleanupUnusedVolumes(ctx context.Context, cli *client.Client) {
+func cleanupUnusedVolumes(ctx context.Context, cli DockerClient) {
 	logInfo("Starting unused volumes cleanup")
 
 	report, err := cli.VolumesPrune(ctx, filters.Args{})
@@ -121,7 +140,7 @@ func cleanupUnusedVolumes(ctx context.Context, cli *client.Client) {
 	}
 }
 
-func cleanupUnusedNetworks(ctx context.Context, cli *client.Client) {
+func cleanupUnusedNetworks(ctx context.Context, cli DockerClient) {
 	logInfo("Starting unused networks cleanup")
 
 	report, err := cli.NetworksPrune(ctx, filters.Args{})
@@ -137,7 +156,7 @@ func cleanupUnusedNetworks(ctx context.Context, cli *client.Client) {
 	}
 }
 
-func cleanupUnusedImages(ctx context.Context, cli *client.Client) {
+func cleanupUnusedImages(ctx context.Context, cli DockerClient) {
 	logInfo("Starting unused images cleanup")
 
 	// Get all containers (including stopped ones)
@@ -183,11 +202,11 @@ func cleanupUnusedImages(ctx context.Context, cli *client.Client) {
 				}
 
 				sizeMB := float64(img.Size) / (1024 * 1024)
-				logInfo(fmt.Sprintf("Removing unused image: %s (ID: %s, Size: %.2f MB)", imageName, img.ID[:12], sizeMB))
+				logInfo(fmt.Sprintf("Removing unused image: %s (ID: %s, Size: %.2f MB)", imageName, getShortID(img.ID), sizeMB))
 
 				_, err := cli.ImageRemove(ctx, img.ID, image.RemoveOptions{Force: false, PruneChildren: true})
 				if err != nil {
-					logError(fmt.Sprintf("Failed to remove image %s: %v", img.ID[:12], err))
+					logError(fmt.Sprintf("Failed to remove image %s: %v", getShortID(img.ID), err))
 				} else {
 					removed++
 					totalSize += img.Size
