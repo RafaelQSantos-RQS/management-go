@@ -83,6 +83,20 @@ crontab -e
 ✅ Limpeza completa finalizada!
 ```
 
+## CI/CD e Releases
+
+Este repositório utiliza GitHub Actions para automação:
+
+- **Releases de Binários:** Sempre que uma tag `v*` é criada, binários para Linux, macOS e Windows são gerados e anexados a um novo release no GitHub.
+- **Docker Hub:** No push de uma tag `v*`, a imagem Docker é construída e enviada para o Docker Hub.
+
+### Configuração de Segredos
+Para que o workflow do Docker funcione, configure os seguintes segredos no GitHub:
+- `DOCKERHUB_USERNAME`: Seu usuário do Docker Hub.
+- `DOCKERHUB_TOKEN`: Um Personal Access Token gerado no Docker Hub.
+
+---
+
 ## Requisitos
 
 - Go 1.25+
