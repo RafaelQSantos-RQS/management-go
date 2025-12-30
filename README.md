@@ -28,7 +28,16 @@ go build -o docker-cleanup main.go
 ./docker-cleanup
 ```
 
-### Opção 3: Adicionar ao cron para manutenção automática
+### Opção 4: Executar com Docker (Recomendado para portabilidade)
+```bash
+# Build da imagem
+docker build -t docker-cleanup .
+
+# Executar (requer montagem do socket do Docker)
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock docker-cleanup
+```
+
+### Opção 5: Adicionar ao cron para manutenção automática
 ```bash
 # Editar crontab
 crontab -e
