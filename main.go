@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
@@ -41,13 +42,35 @@ func main() {
 
 	ctx := context.Background()
 
+	intervalStr := os.Getenv("CLEANUP_INTERVAL")
+	if intervalStr == "" {
+		executeCleanup(ctx, cli)
+		logSuccess("Docker cleanup completed")
+		return
+	}
+
+	interval, err := time.ParseDuration(intervalStr)
+	if err != nil {
+		logError(fmt.Sprintf("Invalid CLEANUP_INTERVAL '%s': %v. Running once instead.", intervalStr, err))
+		executeCleanup(ctx, cli)
+		logSuccess("Docker cleanup completed")
+		return
+	}
+
+	logInfo(fmt.Sprintf("Running in daemon mode with interval: %s", interval))
+	for {
+		executeCleanup(ctx, cli)
+		logInfo(fmt.Sprintf("Sleeping for %s...", interval))
+		time.Sleep(interval)
+	}
+}
+
+func executeCleanup(ctx context.Context, cli *client.Client) {
 	// Execute all cleanup operations
 	cleanupStoppedContainers(ctx, cli)
 	cleanupUnusedVolumes(ctx, cli)
 	cleanupUnusedNetworks(ctx, cli)
 	cleanupUnusedImages(ctx, cli)
-
-	logSuccess("Docker cleanup completed")
 }
 
 func cleanupStoppedContainers(ctx context.Context, cli *client.Client) {

@@ -33,9 +33,18 @@ go build -o docker-cleanup main.go
 # Build da imagem
 docker build -t docker-cleanup .
 
-# Executar (requer montagem do socket do Docker)
-docker run --rm -v /var/run/docker.sock:/var/run/docker.sock docker-cleanup
+# Executar como Daemon (Recorrente)
+Para que a limpeza ocorra automaticamente sem cron externo, use a variável `CLEANUP_INTERVAL`.
+
+```bash
+docker run -d \
+  --name docker-cleanup \
+  -e CLEANUP_INTERVAL=24h \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  docker-cleanup
 ```
+
+Valores válidos: `1h`, `24h`, `30m`, `1d`. Se não for definida, o script roda uma vez e sai.
 
 ### Opção 5: Adicionar ao cron para manutenção automática
 ```bash
