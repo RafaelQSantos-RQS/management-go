@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/banner.png" alt="Docker Cleanup Banner" width="50%">
+  <img src="assets/banner.png" alt="Docker Cleanup Banner" width="25%">
 </p>
 
 # 🧹 Docker Cleanup Tool
