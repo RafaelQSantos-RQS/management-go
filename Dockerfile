@@ -21,7 +21,7 @@ LABEL org.opencontainers.image.title="Docker Cleanup Tool" \
       org.opencontainers.image.source="https://github.com/rafael-qsantos/Management-go" \
       org.opencontainers.image.version="1.0.0" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.authors="Rafael"
+      org.opencontainers.image.authors="Rafael Queiroz Santos"
 
 WORKDIR /root/
 

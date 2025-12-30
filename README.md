@@ -1,122 +1,91 @@
-# Docker Cleanup Script
+<p align="center">
+  <img src="assets/banner.png" alt="Docker Cleanup Banner" width="100%">
+</p>
 
-Script automatizado em Go para limpeza de ambientes Docker.
+# 🧹 Docker Cleanup Tool
 
-## O que faz
+[![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?style=for-the-badge&logo=go)](https://golang.org/)
+[![Docker Compliant](https://img.shields.io/badge/Docker-OCI--Compliant-2496ED?style=for-the-badge&logo=docker)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-Remove automaticamente:
-- ✅ Containers parados
-- ✅ Volumes não utilizados
-- ✅ Redes não utilizadas
-- ✅ Imagens não utilizadas (incluindo com tags)
+An automated, lightweight, and professional Go utility designed to keep your Docker environment lean and efficient. It safely removes unused resources without interrupting your active containers.
 
-**Segurança:** Containers em execução e suas imagens são sempre preservados.
+---
 
-## Como usar
+## ✨ Key Features
 
-### Opção 1: Executar com Go
+- **✅ Container Management:** Automatically identifies and removes stopped containers.
+- **✅ Volume Pruning:** Safely reclaims disk space by deleting orphan volumes.
+- **✅ Network Cleanup:** Removes unused Docker networks.
+- **✅ Image Optimization:** Prunes dangling and unused images (while preserving those in use).
+- **✅ Daemon Mode:** Can run as a persistent background service with configurable intervals.
+- **✅ Cloud Ready:** Fully Dockerized and OCI-compliant.
+
+---
+
+## 🚀 Getting Started
+
+### 🐳 Option 1: Docker (Recommended)
+The most portable way to run the tool. Ideal for servers and CI/CD environments.
+
+**One-shot run:**
 ```bash
-go run main.go
+docker run --rm -v /var/run/docker.sock:/var/run/docker.sock rafaelqsantos/docker-cleanup
 ```
 
-### Opção 2: Compilar e executar binário
-```bash
-# Compilar
-go build -o docker-cleanup main.go
-
-# Executar
-./docker-cleanup
-```
-
-### Opção 4: Executar com Docker (Recomendado para portabilidade)
-```bash
-# Build da imagem
-docker build -t docker-cleanup .
-
-# Executar como Daemon (Recorrente)
-Para que a limpeza ocorra automaticamente sem cron externo, use a variável `CLEANUP_INTERVAL`.
-
+**Running as a Daemon (Background Service):**
 ```bash
 docker run -d \
   --name docker-cleanup \
   -e CLEANUP_INTERVAL=24h \
   -v /var/run/docker.sock:/var/run/docker.sock \
-  docker-cleanup
+  rafaelqsantos/docker-cleanup
 ```
 
-Valores válidos: `1h`, `24h`, `30m`, `1d`. Se não for definida, o script roda uma vez e sai.
+### 💻 Option 2: Pre-compiled Binaries
+Download the latest binaries for your platform from the [Releases](https://github.com/rafael-qsantos/Management-go/releases) page.
 
-### Opção 5: Adicionar ao cron para manutenção automática
 ```bash
-# Editar crontab
-crontab -e
-
-# Executar toda segunda-feira às 3h da manhã
-0 3 * * 1 /caminho/para/docker-cleanup >> /var/log/docker-cleanup.log 2>&1
-
-# Ou executar diariamente às 2h da manhã
-0 2 * * * /caminho/para/docker-cleanup >> /var/log/docker-cleanup.log 2>&1
+# Example for Linux
+./docker-cleanup-linux-amd64
 ```
 
-## Exemplo de saída
+### 🛠️ Option 3: Developer Setup
+If you prefer running from source:
 
+```bash
+git clone https://github.com/rafael-qsantos/Management-go.git
+cd Management-go
+go run main.go
 ```
-🧹 Docker Cleanup Script - Iniciando limpeza automática...
-========================================================
-
-🗑️  Removendo containers parados...
-   ℹ️  Nenhum container parado encontrado
-
-🗑️  Removendo volumes não utilizados...
-   ℹ️  Nenhum volume não utilizado encontrado
-
-🗑️  Removendo redes não utilizadas...
-   ℹ️  Nenhuma rede não utilizada encontrada
-
-🗑️  Removendo imagens não utilizadas...
-   Removendo: postgres:latest (ID: sha256:38d5c, Tamanho: 618.97 MB)
-   Removendo: timescale/timescaledb:latest-pg17 (ID: sha256:e9532, Tamanho: 1139.59 MB)
-   ✅ 2 imagens removidas
-   💾 Espaço recuperado: 1758.56 MB
-
-========================================================
-✅ Limpeza completa finalizada!
-```
-
-## CI/CD e Releases
-
-Este repositório utiliza GitHub Actions para automação:
-
-- **Releases de Binários:** Sempre que uma tag `v*` é criada, binários para Linux, macOS e Windows são gerados e anexados a um novo release no GitHub.
-- **Docker Hub:** No push de uma tag `v*`, a imagem Docker é construída e enviada para o Docker Hub.
-
-### Configuração de Segredos
-Para que o workflow do Docker funcione, configure os seguintes segredos no GitHub:
-- `DOCKERHUB_USERNAME`: Seu usuário do Docker Hub.
-- `DOCKERHUB_TOKEN`: Um Personal Access Token gerado no Docker Hub.
 
 ---
 
-## Requisitos
+## ⚙️ Configuration
 
-- Go 1.25+
-- Acesso ao Docker socket (geralmente `/var/run/docker.sock`)
-- Permissões para executar comandos Docker
+Control the behavior of the tool using environment variables:
 
-## Instalação em servidor
+| Variable | Description | Default | Example |
+| :--- | :--- | :--- | :--- |
+| `CLEANUP_INTERVAL` | Time to wait between cleanup cycles (Daemon Mode) | Empty (Runs once) | `1h`, `24h`, `30m` |
+| `DOCKER_HOST` | Docker socket path (inherited from environment) | `unix:///var/run/docker.sock` | - |
 
-```bash
-# Clone ou copie o projeto
-cd /opt
-git clone <seu-repo> docker-cleanup
-cd docker-cleanup
+---
 
-# Compile
-go build -o docker-cleanup main.go
+## 🤖 CI/CD Automation
 
-# Torne executável
-chmod +x docker-cleanup
+This project is fully automated via GitHub Actions:
+- **Automated Releases:** Every version tag (`v*`) triggers a multi-platform binary build.
+- **Docker Publishing:** Every release is automatically pushed to Docker Hub with `latest` and `version` tags.
 
-# (Opcional) Crie link simbólico para usar globalmente
-sudo ln -s /opt/docker-cleanup/docker-cleanup /usr/local/bin/docker-cleanup
-```
+---
+
+## 📝 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+---
+
+<p align="center">
+  Built with ❤️ by <b>Rafael Queiroz Santos</b>
+</p>
